@@ -1,0 +1,294 @@
+---
+title: "Programming in Base R"
+author: "Calista Harris"
+format: pdf
+editor: visual
+editor_options: 
+  chunk_output_type: console
+---
+
+## Task 1: Basic Vector Practice
+
+### Question 1
+```{r}
+#pre-treatment blood pressure
+pre <- c(130, 128, 116, 124, 133, 134, 118, 126, 114, 127, 
+         141, 138, 128, 140, 137, 131, 120, 128, 139, 135)
+
+#after treatment blood pressure
+post <- c(114, 98, 113, 99, 107, 116, 113, 111, 119, 117, 
+          101, 119, 130, 122, 106, 106, 124, 102, 117, 113)
+```
+
+### Question 2
+```{r}
+#create subject names
+subject_names <- paste("Subject", 1:20, sep = "_")
+
+#assign names to vectors
+names(pre) <- subject_names
+names(post) <- subject_names
+```
+
+### Question 3
+```{r}
+#calculate the change in blood pressure
+diff_op <- pre - post
+
+#print the results
+diff_op
+```
+
+### Question 4
+```{r}
+#calculate the average of all differences (pre - post)
+mean_diff_op <- mean(diff_op)
+
+#print the results
+mean_diff_op
+```
+
+### Question 5
+```{r}
+#patient with decrease in blood pressure (positive change)
+positive_change <- which(diff_op > 0)
+
+#display results with names
+positive_change
+```
+
+\newpage
+### Question 6
+```{r}
+#subset diff_op vector with positive change
+subset_positive_change <- diff_op[diff_op > 0]
+
+#display results
+subset_positive_change
+```
+
+### Question 7
+```{r}
+#calculate average decrease in blood pressure that had a positive change
+avg_positive_change <- mean(diff_op[diff_op > 0])
+
+#display results
+avg_positive_change
+```
+
+\newpage
+
+## Task 2: Basic Data Frame Practice
+
+### Question 1
+```{r}
+#reuse subject names in Question 2 from Task 1 for patient
+patient <- paste("Subject", 1:20, sep = "_")
+
+#create data frame
+bp_df <- data.frame(
+  patient = patient, 
+  pre_bp = pre,
+  post_bp = post,
+  diff_bp = diff_op,
+  row.names = NULL #let the row names be label as 1,2,3,...
+)
+
+#display first 6 rows
+head(bp_df)
+```
+
+### Question 2
+```{r}
+#return rows where diff_bp is negative
+subset(bp_df, diff_bp < 0)
+```
+
+### Question 3
+```{r}
+# new column called normal blood pressure when post_bp < 120
+bp_df$normal <- bp_df$post_bp < 120
+
+#display data frame with new column
+head(bp_df)
+```
+
+### Question 4
+```{r}
+#print table nicely 
+knitr::kable(bp_df,
+             col.names = c("Patient", "Pre-Treatment", "Post-Treatment", 
+                           "Difference", "Normal BP (< 120)"),
+             caption = "Patients' Blood Pressures")
+```
+
+\newpage 
+
+## Task 3: List Practice
+
+### Question 1
+```{r}
+#pre and post measurements for placebo group
+pre <- c(138, 135, 147, 117, 152, 134, 114, 121, 131, 130)
+post <- c(105, 136, 123, 130, 134, 143, 135, 139, 120, 124)
+
+#subject names
+patient <- paste("Subject", 1:10, sep = "_")
+
+#compute differences
+diff_op <- pre - post
+
+#create data frame
+bp_df_placebo <- data.frame(
+  patient = patient,
+  pre_bp = pre,
+  post_bp = post,
+  diff_bp = diff_op,
+  row.names = NULL
+)
+
+#new column for normal blood pressure (post < 120)
+bp_df_placebo$normal <- post < 120
+
+#display first 6 rows of new data frame
+head(bp_df_placebo)
+```
+
+\newpage
+### Question 2
+```{r}
+#combine the two data frames into a named list
+bp_list <- list(
+  treatment = bp_df,
+  placebo = bp_df_placebo
+)
+
+#structure of the new list
+str(bp_list)
+```
+
+### Question 3
+```{r}
+#access the first element with 3 different types syntax 
+
+#type 1: Dollar sign syntax
+bp_list$treatment
+
+#type 2: Double brackets with variable name syntax 
+bp_list[["treatment"]]
+
+#type 3: Double brackets with column numeric index syntax
+bp_list[[1]]
+```
+
+### Question 4
+```{r}
+#access the pre_bp column from the placebo data frame 
+bp_list$placebo$pre_bp
+```
+
+\newpage
+## Task 4: Control Flow Practice
+
+### Question 1
+```{r}
+#create status column for both data frames
+bp_list$treatment$status <- character(nrow(bp_list$treatment))
+bp_list$placebo$status <- character(nrow(bp_list$placebo))
+
+#structure with the new column in each data frame
+str(bp_list$treatment)
+str(bp_list$placebo)
+```
+
+### Question 2
+```{r}
+#for non-placebo data frame
+#use for loop with if/then/else to assign status values
+for (i in 1:nrow(bp_list$treatment)) {
+  post <- bp_list$treatment$post_bp[i]
+  
+  if (post <= 120) {
+    bp_list$treatment$status[i] <- "optimal"
+  } else if (post <= 130) {
+    bp_list$treatment$status[i] <- "borderline"
+  } else {
+    bp_list$treatment$status[i] <- "high"
+  }
+}
+
+#display first 6 rows of updated treatment data frame
+head(bp_list$treatment)
+```
+
+### Question 3
+```{r}
+#repeat the same steps from question 2 for placebo data frame
+for (i in 1:nrow(bp_list$placebo)) {
+  post <- bp_list$placebo$post_bp[i]
+  
+  if (post <= 120) {
+    bp_list$placebo$status[i] <- "optimal"
+  } else if (post <= 130) {
+    bp_list$placebo$status[i] <- "borderline"
+  } else {
+    bp_list$placebo$status[i] <- "high"
+  }
+}
+
+#display first 6 rows of updated placebo data frame
+bp_list$placebo
+```
+
+\newpage
+## Task 5: Function Writing
+
+```{r}
+#create a function to retrieve a statistic from a list with 2 data frames
+calculate_stat <- function(df_list, stat = "mean") {
+  #access the actual function from the string
+  my_fun <- get(stat)
+  
+  #get each column of interest
+  #treatment data frame
+  t_pre  <- my_fun(df_list$treatment$pre_bp)
+  t_post <- my_fun(df_list$treatment$post_bp)
+  t_diff <- my_fun(df_list$treatment$diff_bp)
+  
+  #placebo data frame
+  p_pre  <- my_fun(df_list$placebo$pre_bp)
+  p_post <- my_fun(df_list$placebo$post_bp)
+  p_diff <- my_fun(df_list$placebo$diff_bp)
+  
+  #create a vector of names
+  stat_names <- c(
+    treatment_pre  = t_pre,
+    treatment_post = t_post,
+    treatment_diff = t_diff,
+    placebo_pre    = p_pre,
+    placebo_post   = p_post,
+    placebo_diff   = p_diff
+  )
+  return(stat_names)
+}
+
+#test it
+#use it without specifying your statistic
+#mean
+calculate_stat(bp_list)
+
+#use it with specifying your statistic as "var", "sd", "min", and "max".
+#variance
+calculate_stat(bp_list, "var")
+
+#standard deviation
+calculate_stat(bp_list, "sd")
+
+#minimum
+calculate_stat(bp_list, "min")
+
+#maximum
+calculate_stat(bp_list, "max")
+```
+
+
